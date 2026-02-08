@@ -1,7 +1,9 @@
+"use client";
+
 import { motion } from "framer-motion";
 import { Play, Star } from "lucide-react";
 import { Movie } from "@/data/mockData";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface ContentCardProps {
@@ -9,7 +11,7 @@ interface ContentCardProps {
 }
 
 const ContentCard = ({ movie }: ContentCardProps) => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
@@ -18,7 +20,7 @@ const ContentCard = ({ movie }: ContentCardProps) => {
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.98 }}
       className="relative w-44 md:w-52 cursor-pointer group"
-      onClick={() => navigate(`/watch/${movie.id}`)}
+      onClick={() => router.push(`/watch/${movie.id}`)}
     >
       <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-card">
         {!imageLoaded && !imageError && (

@@ -1,22 +1,23 @@
+"use client";
+
 import { motion } from "framer-motion";
 import { Play, Info, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Movie } from "@/data/mockData";
-import { useNavigate } from "react-router-dom";
-import heroBg from "@/assets/hero-bg.jpg";
+import { useRouter } from "next/navigation";
 
 interface HeroBannerProps {
   movie: Movie;
 }
 
 const HeroBanner = ({ movie }: HeroBannerProps) => {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return (
     <div className="relative h-[85vh] w-full overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${movie.backdropUrl}), url(${heroBg})` }}
+        style={{ backgroundImage: `url(${movie.backdropUrl}), url(/hero-bg.jpg)` }}
       />
       <div className="absolute inset-0 gradient-overlay" />
       <div className="absolute inset-0" style={{ background: "linear-gradient(to right, hsl(220 20% 6% / 0.85) 0%, transparent 60%)" }} />
@@ -60,7 +61,7 @@ const HeroBanner = ({ movie }: HeroBannerProps) => {
             <Button
               size="lg"
               className="gap-2 gradient-accent shadow-glow hover:opacity-90 transition-opacity text-accent-foreground font-semibold px-8"
-              onClick={() => navigate(`/watch/${movie.id}`)}
+              onClick={() => router.push(`/watch/${movie.id}`)}
             >
               <Play className="h-5 w-5 fill-current" />
               Play Now

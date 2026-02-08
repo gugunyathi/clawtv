@@ -10,6 +10,9 @@ export interface Movie {
   backdropUrl: string;
   duration: string;
   streamingPlatforms: string[];
+  torrentFile?: string;
+  videoFile?: string;
+  subtitleFile?: string;
 }
 
 export const MOCK_MOVIES: Movie[] = [
@@ -24,6 +27,8 @@ export const MOCK_MOVIES: Movie[] = [
     backdropUrl: "https://image.tmdb.org/t/p/original/8ZTVqvKDQ8emSGUEMjsS4yHAwrp.jpg",
     duration: "2h 28m",
     streamingPlatforms: ["Netflix", "Prime Video"],
+    videoFile: "/films/inception.mp4",
+    subtitleFile: "/films/Inception.srt",
   },
   {
     id: "2",
@@ -129,16 +134,42 @@ export interface SubtitleLine {
 }
 
 export const MOCK_SUBTITLES: SubtitleLine[] = [
-  { id: 1, startTime: 0, endTime: 3, text: "I need to get to the airport. Call me an Uber." },
-  { id: 2, startTime: 3, endTime: 6, text: "Here, take my iPhone. The app is already open." , keywords: ["iPhone"], adMatch: { category: "mobile", product: "iPhone" } },
-  { id: 3, startTime: 6, endTime: 9, text: "Thanks. I could use a coffee too." , keywords: ["coffee"], adMatch: { category: "beverage", product: "coffee" } },
-  { id: 4, startTime: 9, endTime: 12, text: "There's a Starbucks around the corner." , keywords: ["Starbucks"], adMatch: { category: "beverage", product: "Starbucks" } },
-  { id: 5, startTime: 12, endTime: 15, text: "Perfect. My Tesla should be charged by now." , keywords: ["Tesla"], adMatch: { category: "automotive", product: "Tesla" } },
-  { id: 6, startTime: 15, endTime: 18, text: "Nice car. I've been looking at the new BMW." , keywords: ["BMW"], adMatch: { category: "automotive", product: "BMW" } },
-  { id: 7, startTime: 18, endTime: 21, text: "Let me check the weather on my laptop." },
-  { id: 8, startTime: 21, endTime: 24, text: "It's sunny. Perfect for those new Nike sneakers." , keywords: ["Nike"], adMatch: { category: "footwear", product: "Nike" } },
-  { id: 9, startTime: 24, endTime: 27, text: "I need to stop by the mall first." },
-  { id: 10, startTime: 27, endTime: 30, text: "Sure, I want to check out the Samsung display." , keywords: ["Samsung"], adMatch: { category: "electronics", product: "Samsung" } },
+  { id: 1, startTime: 0, endTime: 4, text: "The dream has become their reality." },
+  { id: 2, startTime: 4, endTime: 8, text: "I need to get to the airport. Call me an Uber." },
+  { id: 3, startTime: 8, endTime: 12, text: "Here, take my iPhone. The app is already open.", keywords: ["iPhone"], adMatch: { category: "mobile", product: "iPhone" } },
+  { id: 4, startTime: 12, endTime: 16, text: "Thanks. Is there time for a quick coffee?" },
+  { id: 5, startTime: 16, endTime: 20, text: "We're not dreaming anymore." },
+  { id: 6, startTime: 20, endTime: 24, text: "The architecture of the mind is complex." },
+  { id: 7, startTime: 24, endTime: 28, text: "I need my morning Starbucks before we start.", keywords: ["Starbucks"], adMatch: { category: "beverage", product: "Starbucks" } },
+  { id: 8, startTime: 28, endTime: 32, text: "Every detail must be perfect." },
+  { id: 9, startTime: 32, endTime: 36, text: "Time moves differently here." },
+  { id: 10, startTime: 36, endTime: 40, text: "My Tesla is waiting outside.", keywords: ["Tesla"], adMatch: { category: "automotive", product: "Tesla" } },
+  { id: 11, startTime: 40, endTime: 44, text: "The subconscious is unpredictable." },
+  { id: 12, startTime: 44, endTime: 48, text: "We need to go deeper." },
+  { id: 13, startTime: 48, endTime: 52, text: "Nice car. I've been looking at the new BMW models.", keywords: ["BMW"], adMatch: { category: "automotive", product: "BMW" } },
+  { id: 14, startTime: 52, endTime: 56, text: "Reality is just a construct." },
+  { id: 15, startTime: 56, endTime: 60, text: "The mind creates its own barriers." },
+  { id: 16, startTime: 60, endTime: 64, text: "We're running out of time." },
+  { id: 17, startTime: 64, endTime: 68, text: "These new Nike sneakers are perfect for quick escapes.", keywords: ["Nike"], adMatch: { category: "footwear", product: "Nike" } },
+  { id: 18, startTime: 68, endTime: 72, text: "Every second counts in the dream world." },
+  { id: 19, startTime: 72, endTime: 76, text: "The projections are getting hostile." },
+  { id: 20, startTime: 76, endTime: 80, text: "We need to plant the idea carefully." },
+  { id: 21, startTime: 80, endTime: 84, text: "Check the Samsung devices for any glitches.", keywords: ["Samsung"], adMatch: { category: "electronics", product: "Samsung" } },
+  { id: 22, startTime: 84, endTime: 88, text: "The deeper we go, the more unstable it becomes." },
+  { id: 23, startTime: 88, endTime: 92, text: "This is the last level." },
+  { id: 24, startTime: 92, endTime: 96, text: "Inception is possible, but dangerous." },
+  { id: 25, startTime: 96, endTime: 100, text: "A coffee would help us stay sharp right now.", keywords: ["coffee"], adMatch: { category: "beverage", product: "coffee" } },
+  { id: 26, startTime: 100, endTime: 104, text: "The mind protects itself from invasion." },
+  { id: 27, startTime: 104, endTime: 108, text: "We're almost there." },
+  { id: 28, startTime: 108, endTime: 112, text: "The kick is coming." },
+  { id: 29, startTime: 112, endTime: 116, text: "Everyone wake up!" },
+  { id: 30, startTime: 116, endTime: 120, text: "Did it work?" },
+  { id: 31, startTime: 120, endTime: 124, text: "We need to verify reality." },
+  { id: 32, startTime: 124, endTime: 128, text: "The totems never lie." },
+  { id: 33, startTime: 128, endTime: 132, text: "Is this still a dream?" },
+  { id: 34, startTime: 132, endTime: 136, text: "The job is complete." },
+  { id: 35, startTime: 136, endTime: 140, text: "Time to go home." },
+  { id: 36, startTime: 140, endTime: 144, text: "Or is it?" },
 ];
 
 export const AD_LIBRARY = [

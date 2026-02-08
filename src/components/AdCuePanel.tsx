@@ -1,3 +1,5 @@
+"use client";
+
 import { motion } from "framer-motion";
 import { Zap, Eye, TrendingUp, Tag, Clock } from "lucide-react";
 import { SubtitleLine, AD_LIBRARY } from "@/data/mockData";

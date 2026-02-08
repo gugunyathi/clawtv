@@ -1,10 +1,13 @@
-import { Link, useLocation } from "react-router-dom";
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Search, Bell, User, Tv, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 
 const Navbar = () => {
-  const location = useLocation();
+  const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
 
   return (
@@ -18,7 +21,7 @@ const Navbar = () => {
       }}
     >
       <div className="flex items-center gap-8">
-        <Link to="/" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <Tv className="h-7 w-7 text-primary" />
           <span className="font-display text-xl font-bold text-foreground tracking-tight">
             Open<span className="text-gradient">Claw</span>
@@ -26,9 +29,9 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden md:flex items-center gap-6">
-          <NavItem to="/" label="Home" active={location.pathname === "/"} />
-          <NavItem to="/browse" label="Browse" active={location.pathname === "/browse"} />
-          <NavItem to="/ad-studio" label="Ad Studio" active={location.pathname === "/ad-studio"} />
+          <NavItem to="/" label="Home" active={pathname === "/"} />
+          <NavItem to="/browse" label="Browse" active={pathname === "/browse"} />
+          <NavItem to="/ad-studio" label="Ad Studio" active={pathname === "/ad-studio"} />
         </div>
       </div>
 
@@ -57,7 +60,7 @@ const Navbar = () => {
 
 const NavItem = ({ to, label, active }: { to: string; label: string; active: boolean }) => (
   <Link
-    to={to}
+    href={to}
     className={`text-sm font-medium transition-colors relative ${
       active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
     }`}

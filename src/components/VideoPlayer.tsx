@@ -1,29 +1,65 @@
+"use client";
+
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward,
-  Settings, Subtitles, X, Zap
+  Settings, Subtitles, X, Zap, Loader2
 } from "lucide-react";
 import { SubtitleLine, AD_LIBRARY } from "@/data/mockData";
+import { useTorrentStream } from "@/hooks/useTorrentStream";
+import { parseSRTFile, ParsedSubtitle } from "@/lib/srtParser";
 
 interface VideoPlayerProps {
   title: string;
   subtitles: SubtitleLine[];
+  torrentFile?: string;
+  videoFile?: string;
+  subtitleFile?: string;
 }
 
-const VideoPlayer = ({ title, subtitles }: VideoPlayerProps) => {
+const VideoPlayer = ({ title, subtitles: defaultSubtitles, torrentFile, videoFile, subtitleFile }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const [showSubtitles, setShowSubtitles] = useState(true);
   const [showAdOverlay, setShowAdOverlay] = useState(false);
   const [currentAd, setCurrentAd] = useState<typeof AD_LIBRARY[0] | null>(null);
   const [adCountdown, setAdCountdown] = useState(0);
+  const [wasPlayingBeforeAd, setWasPlayingBeforeAd] = useState(false);
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [subtitles, setSubtitles] = useState<SubtitleLine[]>(defaultSubtitles);
+  const [loadingSubtitles, setLoadingSubtitles] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const controlsTimeout = useRef<NodeJS.Timeout | null>(null);
-  const totalDuration = 30; // demo duration in seconds
+  
+  // Use torrent stream hook (only if torrentFile is provided)
+  const torrentStream = useTorrentStream(torrentFile);
+
+  // Determine video source (prefer direct video file over torrent)
+  const videoSource = videoFile || torrentStream.videoUrl;
+
+  const totalDuration = duration || 30; // Use actual video duration or demo duration
+
+  // Load SRT subtitle file if provided
+  useEffect(() => {
+    if (subtitleFile) {
+      setLoadingSubtitles(true);
+      parseSRTFile(subtitleFile)
+        .then((parsed) => {
+          if (parsed.length > 0) {
+            setSubtitles(parsed as SubtitleLine[]);
+          }
+          setLoadingSubtitles(false);
+        })
+        .catch((error) => {
+          console.error('Failed to load subtitles:', error);
+          setLoadingSubtitles(false);
+        });
+    }
+  }, [subtitleFile]);
 
   const currentSubtitle = subtitles.find(
     (s) => currentTime >= s.startTime && currentTime < s.endTime
@@ -35,30 +71,55 @@ const VideoPlayer = ({ title, subtitles }: VideoPlayerProps) => {
       (ad) => ad.category === subtitle.adMatch?.category
     );
     if (matchingAd) {
+      setWasPlayingBeforeAd(isPlaying);
       setCurrentAd(matchingAd);
-      setAdCountdown(5);
+      setAdCountdown(3);
       setShowAdOverlay(true);
       setIsPlaying(false);
     }
-  }, [showAdOverlay]);
+  }, [showAdOverlay, isPlaying]);
 
-  // Playback timer
+  // Handle video element events
   useEffect(() => {
-    if (isPlaying && !showAdOverlay) {
-      timerRef.current = setInterval(() => {
-        setCurrentTime((prev) => {
-          if (prev >= totalDuration) {
-            setIsPlaying(false);
-            return 0;
-          }
-          return prev + 0.1;
-        });
-      }, 100);
-    }
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleTimeUpdate = () => setCurrentTime(video.currentTime);
+    const handleLoadedMetadata = () => setDuration(video.duration);
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
+
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
     };
-  }, [isPlaying, showAdOverlay]);
+  }, [videoSource]);
+
+  // Update video volume
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.volume = muted ? 0 : volume;
+  }, [volume, muted]);
+
+  // Play/Pause control
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !videoSource) return;
+
+    if (isPlaying && !showAdOverlay) {
+      video.play().catch(() => setIsPlaying(false));
+    } else {
+      video.pause();
+    }
+  }, [isPlaying, showAdOverlay, videoSource]);
 
   // Check for ad triggers
   useEffect(() => {
@@ -70,19 +131,26 @@ const VideoPlayer = ({ title, subtitles }: VideoPlayerProps) => {
     }
   }, [currentTime, currentSubtitle, isPlaying, triggerAd]);
 
+  // Dismiss ad and resume playback
+  const dismissAd = useCallback(() => {
+    setShowAdOverlay(false);
+    setCurrentAd(null);
+    // Restore the playback state from before the ad
+    if (wasPlayingBeforeAd && videoSource) {
+      setIsPlaying(true);
+    }
+  }, [wasPlayingBeforeAd, videoSource]);
+
   // Ad countdown
   useEffect(() => {
     if (showAdOverlay && adCountdown > 0) {
       const t = setTimeout(() => setAdCountdown(adCountdown - 1), 1000);
       return () => clearTimeout(t);
+    } else if (showAdOverlay && adCountdown === 0) {
+      // Automatically dismiss ad when countdown reaches 0 (like real TV)
+      dismissAd();
     }
-  }, [showAdOverlay, adCountdown]);
-
-  const dismissAd = () => {
-    setShowAdOverlay(false);
-    setCurrentAd(null);
-    setIsPlaying(true);
-  };
+  }, [showAdOverlay, adCountdown, dismissAd]);
 
   const handleMouseMove = () => {
     setShowControls(true);
@@ -106,14 +174,44 @@ const VideoPlayer = ({ title, subtitles }: VideoPlayerProps) => {
       onMouseMove={handleMouseMove}
       onMouseLeave={() => isPlaying && setShowControls(false)}
     >
-      {/* Video placeholder */}
-      <div className="absolute inset-0 gradient-hero flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4 opacity-20">🎬</div>
-          <p className="text-muted-foreground text-sm">Torrent stream will appear here</p>
-          <p className="text-muted-foreground text-xs mt-1">Demo mode: Subtitle-based ad cueing active</p>
+      {/* Video element or placeholder */}
+      {videoSource ? (
+        <video
+          ref={videoRef}
+          className="absolute inset-0 w-full h-full object-contain bg-black"
+          src={videoSource}
+          onClick={() => setIsPlaying(!isPlaying)}
+        />
+      ) : (
+        <div className="absolute inset-0 gradient-hero flex items-center justify-center">
+          <div className="text-center">
+            {torrentStream.loading ? (
+              <>
+                <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+                <p className="text-foreground font-medium mb-2">Loading torrent stream...</p>
+                <p className="text-muted-foreground text-sm">Progress: {torrentStream.progress}%</p>
+              </>
+            ) : torrentStream.error ? (
+              <>
+                <div className="text-6xl mb-4 opacity-20">⚠️</div>
+                <p className="text-destructive font-medium mb-2">Error loading torrent</p>
+                <p className="text-muted-foreground text-xs">{torrentStream.error}</p>
+              </>
+            ) : torrentFile ? (
+              <>
+                <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+                <p className="text-foreground font-medium">Initializing torrent...</p>
+              </>
+            ) : (
+              <>
+                <div className="text-6xl mb-4 opacity-20">🎬</div>
+                <p className="text-muted-foreground text-sm">No torrent file available</p>
+                <p className="text-muted-foreground text-xs mt-1">Demo mode: Subtitle-based ad cueing active</p>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Subtitle overlay */}
       <AnimatePresence>
@@ -170,17 +268,9 @@ const VideoPlayer = ({ title, subtitles }: VideoPlayerProps) => {
               </div>
               <h3 className="font-display text-xl font-bold text-foreground mb-1">{currentAd.brand}</h3>
               <p className="text-sm text-muted-foreground mb-4">{currentAd.title}</p>
-              <button
-                onClick={dismissAd}
-                className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
-                  adCountdown > 0
-                    ? "bg-secondary text-muted-foreground cursor-not-allowed"
-                    : "gradient-accent text-accent-foreground hover:opacity-90 shadow-glow cursor-pointer"
-                }`}
-                disabled={adCountdown > 0}
-              >
-                {adCountdown > 0 ? `Skip in ${adCountdown}s` : "Skip Ad"}
-              </button>
+              <div className="px-6 py-2 rounded-lg text-sm font-medium bg-secondary/50 text-muted-foreground">
+                Resuming in {adCountdown}s...
+              </div>
             </div>
           </motion.div>
         )}
@@ -197,7 +287,11 @@ const VideoPlayer = ({ title, subtitles }: VideoPlayerProps) => {
           onClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             const pct = (e.clientX - rect.left) / rect.width;
-            setCurrentTime(pct * totalDuration);
+            const newTime = pct * totalDuration;
+            setCurrentTime(newTime);
+            if (videoRef.current && videoSource) {
+              videoRef.current.currentTime = newTime;
+            }
           }}
         >
           <div
@@ -223,7 +317,16 @@ const VideoPlayer = ({ title, subtitles }: VideoPlayerProps) => {
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button onClick={() => setCurrentTime(Math.max(0, currentTime - 10))} className="p-1.5 hover:bg-secondary/50 rounded-lg transition-colors">
+            <button 
+              onClick={() => {
+                const newTime = Math.max(0, currentTime - 10);
+                setCurrentTime(newTime);
+                if (videoRef.current && videoSource) {
+                  videoRef.current.currentTime = newTime;
+                }
+              }} 
+              className="p-1.5 hover:bg-secondary/50 rounded-lg transition-colors"
+            >
               <SkipBack className="h-5 w-5 text-foreground" />
             </button>
             <button
@@ -232,7 +335,16 @@ const VideoPlayer = ({ title, subtitles }: VideoPlayerProps) => {
             >
               {isPlaying ? <Pause className="h-5 w-5 text-accent-foreground" /> : <Play className="h-5 w-5 text-accent-foreground fill-current" />}
             </button>
-            <button onClick={() => setCurrentTime(Math.min(totalDuration, currentTime + 10))} className="p-1.5 hover:bg-secondary/50 rounded-lg transition-colors">
+            <button 
+              onClick={() => {
+                const newTime = Math.min(totalDuration, currentTime + 10);
+                setCurrentTime(newTime);
+                if (videoRef.current && videoSource) {
+                  videoRef.current.currentTime = newTime;
+                }
+              }} 
+              className="p-1.5 hover:bg-secondary/50 rounded-lg transition-colors"
+            >
               <SkipForward className="h-5 w-5 text-foreground" />
             </button>
             <span className="text-xs text-muted-foreground ml-2">
