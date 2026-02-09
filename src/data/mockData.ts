@@ -27,7 +27,7 @@ export const MOCK_MOVIES: Movie[] = [
     backdropUrl: "https://image.tmdb.org/t/p/original/8ZTVqvKDQ8emSGUEMjsS4yHAwrp.jpg",
     duration: "2h 28m",
     streamingPlatforms: ["Netflix", "Prime Video"],
-    videoFile: "/films/inception.mp4",
+    videoFile: "/films/Inception.mp4",
     subtitleFile: "/films/Inception.srt",
   },
   {
