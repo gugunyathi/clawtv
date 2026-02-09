@@ -9,6 +9,8 @@ import {
 import { SubtitleLine, AD_LIBRARY } from "@/data/mockData";
 import { useTorrentStream } from "@/hooks/useTorrentStream";
 import { parseSRTFile, ParsedSubtitle } from "@/lib/srtParser";
+import { useDynamicAds } from "@/hooks/useDynamicAds";
+import { SelectedAd } from "@/types/agent";
 
 interface VideoPlayerProps {
   title: string;
@@ -32,11 +34,15 @@ const VideoPlayer = ({ title, subtitles: defaultSubtitles, torrentFile, videoFil
   const [muted, setMuted] = useState(false);
   const [subtitles, setSubtitles] = useState<SubtitleLine[]>(defaultSubtitles);
   const [loadingSubtitles, setLoadingSubtitles] = useState(false);
+  const [selectedAd, setSelectedAd] = useState<SelectedAd | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsTimeout = useRef<NodeJS.Timeout | null>(null);
   
   // Use torrent stream hook (only if torrentFile is provided)
   const torrentStream = useTorrentStream(torrentFile);
+  
+  // Use dynamic ads hook
+  const { selectAd, fetchSentiment, trackImpression, trackClick } = useDynamicAds();
 
   // Determine video source (prefer direct video file over torrent)
   const videoSource = videoFile || torrentStream.videoUrl;
@@ -65,19 +71,53 @@ const VideoPlayer = ({ title, subtitles: defaultSubtitles, torrentFile, videoFil
     (s) => currentTime >= s.startTime && currentTime < s.endTime
   );
 
-  const triggerAd = useCallback((subtitle: SubtitleLine) => {
+  const triggerAd = useCallback(async (subtitle: SubtitleLine) => {
     if (!subtitle.adMatch || showAdOverlay) return;
-    const matchingAd = AD_LIBRARY.find(
-      (ad) => ad.category === subtitle.adMatch?.category
-    );
-    if (matchingAd) {
+    
+    // Fetch current sentiment data
+    const sentimentData = await fetchSentiment();
+    
+    // Select ad dynamically based on subtitle keywords and sentiment
+    const ad = await selectAd({
+      subtitleKeywords: subtitle.adMatch ? [subtitle.adMatch.category] : [],
+      currentSentiment: sentimentData,
+      timestamp: new Date().toISOString(),
+    });
+    
+    if (ad) {
+      // Use agent-selected ad
+      setSelectedAd(ad);
       setWasPlayingBeforeAd(isPlaying);
-      setCurrentAd(matchingAd);
+      setCurrentAd({
+        id: ad.campaign.id,
+        category: ad.campaign.category,
+        product: ad.campaign.product,
+        tagline: ad.campaign.tagline,
+        description: ad.campaign.description,
+        imageUrl: ad.campaign.imageUrl,
+        ctaText: ad.campaign.ctaText,
+        ctaUrl: ad.campaign.ctaUrl,
+      });
       setAdCountdown(3);
       setShowAdOverlay(true);
       setIsPlaying(false);
+      
+      // Track impression
+      trackImpression(ad.campaign.id);
+    } else {
+      // Fallback to static ads if no dynamic ad available
+      const matchingAd = AD_LIBRARY.find(
+        (ad) => ad.category === subtitle.adMatch?.category
+      );
+      if (matchingAd) {
+        setWasPlayingBeforeAd(isPlaying);
+        setCurrentAd(matchingAd);
+        setAdCountdown(3);
+        setShowAdOverlay(true);
+        setIsPlaying(false);
+      }
     }
-  }, [showAdOverlay, isPlaying]);
+  }, [showAdOverlay, isPlaying, selectAd, fetchSentiment, trackImpression]);
 
   // Handle video element events
   useEffect(() => {

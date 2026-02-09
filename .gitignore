@@ -35,3 +35,4 @@ next-env.d.ts
 !.env.example
 !.env.sample
 .env*.local
+.vercel

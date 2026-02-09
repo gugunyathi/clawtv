@@ -1,5 +1,7 @@
 import WatchPage from "@/pages/WatchPageClient";
 
-export default function Watch({ params }: { params: { id: string } }) {
+export default async function Watch({ params }: { params: Promise<{ id: string }> }) {
+  // Await params for Next.js 15 compatibility
+  await params;
   return <WatchPage />;
 }
