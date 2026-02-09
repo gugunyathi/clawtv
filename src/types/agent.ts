@@ -10,6 +10,7 @@ export interface AgentAdCampaign {
   tagline: string;
   description: string;
   imageUrl: string;
+  videoUrl?: string; // Optional video ad URL
   ctaText: string;
   ctaUrl: string;
   keywords: string[]; // Subtitle keywords that trigger this ad

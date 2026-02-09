@@ -91,10 +91,13 @@ const VideoPlayer = ({ title, subtitles: defaultSubtitles, torrentFile, videoFil
       setCurrentAd({
         id: ad.campaign.id,
         category: ad.campaign.category,
+        brand: ad.campaign.product,
+        title: ad.campaign.tagline,
         product: ad.campaign.product,
         tagline: ad.campaign.tagline,
         description: ad.campaign.description,
         imageUrl: ad.campaign.imageUrl,
+        videoUrl: ad.campaign.videoUrl,
         ctaText: ad.campaign.ctaText,
         ctaUrl: ad.campaign.ctaUrl,
       });
@@ -304,7 +307,18 @@ const VideoPlayer = ({ title, subtitles: defaultSubtitles, torrentFile, videoFil
                 <span className="text-sm font-medium text-primary">OpenClaw AI Ad</span>
               </div>
               <div className="rounded-xl overflow-hidden shadow-elevated mb-4 border border-border">
-                <img src={currentAd.imageUrl} alt={currentAd.title} className="w-full" />
+                {(currentAd as any).videoUrl ? (
+                  <video 
+                    src={(currentAd as any).videoUrl} 
+                    autoPlay 
+                    muted 
+                    loop 
+                    playsInline
+                    className="w-full"
+                  />
+                ) : (
+                  <img src={currentAd.imageUrl} alt={currentAd.title} className="w-full" />
+                )}
               </div>
               <h3 className="font-display text-xl font-bold text-foreground mb-1">{currentAd.brand}</h3>
               <p className="text-sm text-muted-foreground mb-4">{currentAd.title}</p>

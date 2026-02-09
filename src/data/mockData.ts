@@ -174,8 +174,8 @@ export const MOCK_SUBTITLES: SubtitleLine[] = [
 
 export const AD_LIBRARY = [
   { id: "ad1", category: "automotive", brand: "Tesla", title: "The Future of Driving", imageUrl: "https://placehold.co/400x225/1a1f36/3b82f6?text=Tesla+Ad", duration: 15 },
-  { id: "ad2", category: "automotive", brand: "BMW", title: "Ultimate Driving Machine", imageUrl: "https://placehold.co/400x225/1a1f36/3b82f6?text=BMW+Ad", duration: 10 },
-  { id: "ad3", category: "beverage", brand: "Starbucks", title: "Your Daily Ritual", imageUrl: "https://placehold.co/400x225/1a1f36/3b82f6?text=Starbucks+Ad", duration: 10 },
+  { id: "ad2", category: "automotive", brand: "BMW", title: "Ultimate Driving Machine", imageUrl: "https://placehold.co/400x225/1a1f36/3b82f6?text=BMW+Ad", videoUrl: "/ads/BMW.mp4", duration: 10 },
+  { id: "ad3", category: "beverage", brand: "Starbucks", title: "Your Daily Ritual", imageUrl: "https://placehold.co/400x225/1a1f36/3b82f6?text=Starbucks+Ad", videoUrl: "/ads/Starbucks.mp4", duration: 10 },
   { id: "ad4", category: "mobile", brand: "Apple", title: "iPhone - Shot on iPhone", imageUrl: "https://placehold.co/400x225/1a1f36/3b82f6?text=Apple+Ad", duration: 15 },
   { id: "ad5", category: "footwear", brand: "Nike", title: "Just Do It", imageUrl: "https://placehold.co/400x225/1a1f36/3b82f6?text=Nike+Ad", duration: 10 },
   { id: "ad6", category: "electronics", brand: "Samsung", title: "Galaxy Experience", imageUrl: "https://placehold.co/400x225/1a1f36/3b82f6?text=Samsung+Ad", duration: 12 },
