@@ -109,9 +109,19 @@ const VideoPlayer = ({ title, subtitles: defaultSubtitles, torrentFile, videoFil
       trackImpression(ad.campaign.id);
     } else {
       // Fallback to static ads if no dynamic ad available
-      const matchingAd = AD_LIBRARY.find(
-        (ad) => ad.category === subtitle.adMatch?.category
+      // First try to match both category and product/brand for exact match
+      let matchingAd = AD_LIBRARY.find(
+        (ad) => ad.category === subtitle.adMatch?.category && 
+                ad.brand === subtitle.adMatch?.product
       );
+      
+      // If no exact match, fallback to category-only match
+      if (!matchingAd) {
+        matchingAd = AD_LIBRARY.find(
+          (ad) => ad.category === subtitle.adMatch?.category
+        );
+      }
+      
       if (matchingAd) {
         setWasPlayingBeforeAd(isPlaying);
         setCurrentAd(matchingAd);
